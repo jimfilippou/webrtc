@@ -1,0 +1,8 @@
+
+video {
+    transition: all ease-in-out .3s;
+    &.rotated {
+        transform: rotateY(180deg);
+    }
+}
+
