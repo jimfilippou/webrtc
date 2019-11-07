@@ -31,7 +31,7 @@ document.getElementById('rotate').addEventListener('click', (ev) => {
 const init = (): void => {
     navigator.mediaDevices
         .getUserMedia(constraints)
-        .then(stream => {
+        .then((stream: MediaStream) => {
             handleSuccess(stream);
         })
         .catch(err => {
@@ -39,7 +39,7 @@ const init = (): void => {
         });
 }
 
-function handleSuccess(stream) {
+const handleSuccess = (stream: MediaStream) => {
     const videoTracks = stream.getVideoTracks();
     console.log("Got stream with constraints:", constraints);
     console.log(`Using video device: ${videoTracks[0].label}`);
@@ -47,7 +47,7 @@ function handleSuccess(stream) {
     video.srcObject = stream;
 }
 
-function handleError(error: Error) {
+const handleError = (error: Error) => {
     if (error.name === "ConstraintNotSatisfiedError") {
         let v: any = constraints.video;
         alert(
