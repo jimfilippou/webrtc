@@ -3,11 +3,12 @@ import './index.scss';
 import { CustomWindow } from './models';
 
 declare let window: CustomWindow;
+declare let navigator: any;
 
 // Put variables in global scope to make them available to the browser console.
 const constraints = (window.constraints = {
     audio: false,
-    video: { width: 1280, height: 720 }
+    video: true
 });
 
 const video = document.querySelector('video');
@@ -30,7 +31,7 @@ document.getElementById('rotate').addEventListener('click', (ev) => {
 
 const init = (): void => {
     navigator.mediaDevices
-        .getUserMedia(constraints)
+        .getDisplayMedia(constraints)
         .then((stream: MediaStream) => {
             handleSuccess(stream);
         })
