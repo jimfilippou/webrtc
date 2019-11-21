@@ -1,51 +1,60 @@
 import './index.scss';
-
-import { CustomWindow } from './models';
+import { applySelectors } from './src/selectors';
+import { CustomWindow } from './src/models';
+import * as toastr from "toastr";
 
 declare let window: CustomWindow;
 declare let navigator: any;
 
 // Put variables in global scope to make them available to the browser console.
-const constraints = (window.constraints = {
-    audio: false,
-    video: true
-});
+const constraints: MediaStreamConstraints = {
+    video: true,
+    audio: true
+}
 
-const video = document.querySelector('video');
-
-document.getElementById('play').addEventListener('click', (ev) => {
-    video.play();
-})
-
-document.getElementById('stop').addEventListener('click', (ev) => {
-    video.pause();
-})
-
-document.getElementById('rotate').addEventListener('click', (ev) => {
-    if (video.classList.contains('rotated')) {
-        video.classList.remove('rotated');
-    } else {
-        video.classList.add('rotated');
-    }
-})
+// Set global because why not
+window.constraints = constraints;
 
 const init = (): void => {
+
+    const firstPeer: RTCPeerConnection = new RTCPeerConnection();
+    const secondPeer: RTCPeerConnection = new RTCPeerConnection();
+
+    firstPeer.onicecandidate = event => {
+        if (event.candidate) {
+            secondPeer.addIceCandidate(event.candidate);
+        }
+    }
+
+    secondPeer.onicecandidate = event => {
+        if (event.candidate) {
+            firstPeer.addIceCandidate(event.candidate);
+        }
+    }
+
+
+
     navigator.mediaDevices
         .getDisplayMedia(constraints)
         .then((stream: MediaStream) => {
-            handleSuccess(stream);
+            window.stream = stream;
+            document.querySelector<HTMLVideoElement>("#local").srcObject = stream;
+            firstPeer.addStream(stream)
+            return firstPeer.createOffer()
         })
-        .catch(err => {
+        .then((offer: RTCSessionDescriptionInit) => firstPeer.setLocalDescription(new RTCSessionDescription(offer)))
+        .then(() => secondPeer.setRemoteDescription(firstPeer.localDescription))
+        .then(() => secondPeer.createAnswer())
+        .then((answer: RTCSessionDescriptionInit) => secondPeer.setLocalDescription(new RTCSessionDescription(answer)))
+        .then(() => firstPeer.setRemoteDescription(secondPeer.localDescription))
+        .catch((err: Error) => {
             handleError(err);
         });
-}
 
-const handleSuccess = (stream: MediaStream) => {
-    const videoTracks = stream.getVideoTracks();
-    console.log("Got stream with constraints:", constraints);
-    console.log(`Using video device: ${videoTracks[0].label}`);
-    window.stream = stream; // make variable available to browser console
-    video.srcObject = stream;
+    secondPeer.ontrack = event => {
+        document.querySelector<HTMLVideoElement>("#remote").srcObject = event.streams[0];
+    }
+
 }
 
 const handleError = (error: Error) => {
@@ -61,7 +70,9 @@ const handleError = (error: Error) => {
             "order for the demo to work."
         );
     }
-    alert(`getUserMedia error: ${error.name}`);
+    console.error(error);
+    toastr.error(error.message);
 }
 
+applySelectors();
 init();

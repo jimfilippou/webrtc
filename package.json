@@ -1,6 +1,11 @@
 {
   "devDependencies": {
+    "@types/toastr": "^2.1.37",
+    "@types/webrtc": "^0.0.25",
     "sass": "^1.23.3",
     "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "toastr": "^2.1.4"
   }
 }
